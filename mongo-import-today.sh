@@ -20,7 +20,7 @@ IMAGES_QA="http://mediaplay.qa.nymetro.com/imgs"
 #Transfer articles
 echo $QUERY
 mongoexport --host $MONGO_PROD_HOST --db $MONGO_DATABASE --collection $COLLECTION --query "{blogName:'Vulture', publishDate: {\$gte: new Date($TIMESTAMP_YESTERDAY)}}" --out $MONGO_OUT
-sed -e 's#http://www.vulture.com#http://factory.qa.vulture.com#g' $MONGO_OUT > $MONGO_TEMP
+sed -e 's#http://www.vulture.com#http://www.qa.vulture.com#g' $MONGO_OUT > $MONGO_TEMP
 mongoimport --upsert --host $MONGO_QA_HOST --db $MONGO_DATABASE --collection $COLLECTION --file vulture_qa_today.json
 
 #Get feeds
