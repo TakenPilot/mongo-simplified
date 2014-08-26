@@ -16,6 +16,8 @@ MONGO_TEMP='vulture_qa_today.json'
 QUERY="'{blogName:\"Vulture\", publishDate: {\$gte: new Date($TIMESTAMP_YESTERDAY)}'"
 IMAGES_PROD="http://mediaplay.prd.nymetro.com/imgs"
 IMAGES_QA="http://mediaplay.qa.nymetro.com/imgs"
+MAX_TIME='3'
+MAX_TIME_POST='10'
 
 #Transfer articles
 echo $QUERY
@@ -35,7 +37,7 @@ perl -ne 'print "$1\n" while (/content\/dam\/(.*?(jpg|png))/igs)' top-stories.js
 #Download images
 for file in $(cat images.txt) ; do
 	echo $file
-	curl -s -O $IMAGES_PROD/$file -w "%{filename_effective}" >filename.txt
+	curl -m $MAX_TIME -s -O "$IMAGES_PROD/$file" -w "%{filename_effective}" >filename.txt
 	
 	echo "$file" | perl -ne 'print "$1\n" while (/(.*)\/.*?(jpg|png)/igs)' >path.txt
 	cat path.txt
@@ -44,11 +46,11 @@ for file in $(cat images.txt) ; do
 	echo
 	FILEPATH=$(cat path.txt)
 	FILENAME=$(cat filename.txt)
-	echo "curl -If $IMAGES_QA/$FILEPATH/$FILENAME -w '%{http_code}'"
-	convert $FILENAME -sepia-tone 80% -resize '300' $FILENAME
-	curl -If $IMAGES_QA/$FILEPATH/$FILENAME -w "%{http_code}"
+	echo "curl -m $MAX_TIME -If $IMAGES_QA/$FILEPATH/$FILENAME -w '%{http_code}'"
+	convert "$FILENAME" -sepia-tone 80% -resize '300' "$FILENAME"
+	curl -m $MAX_TIME -If "$IMAGES_QA/$FILEPATH/$FILENAME" -w "%{http_code}"
 	if [ $? -ne 0 ] ; then
-		curl -v -s -X POST -b 'user={"username":"test","groups":[]}' -FuploadPath=$FILEPATH -Fthisparamdoesnotmatter=@$FILENAME http://mediaplay.qa.nymetro.com/admin/imgs/
+		curl -m $MAX_TIME_POST -v -s -X POST -b 'user={"username":"test","groups":[]}' -FuploadPath="$FILEPATH" -Fthisparamdoesnotmatter="@$FILENAME" http://mediaplay.qa.nymetro.com/admin/imgs/
 	fi
 	cat filename.txt | xargs rm
 	cat path.txt | xargs rm
